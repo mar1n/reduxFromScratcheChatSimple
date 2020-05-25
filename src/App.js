@@ -1,3 +1,5 @@
+import React from 'react'
+
 function createStore(reducer, initialState) {
   let state = initialState;
   const listeners = []
@@ -44,30 +46,90 @@ const initialState = { messages: [] }
 
 const store = createStore(reducer, initialState)
 
-const listener = () => {
-  console.log('Current state: ')
-  console.log(store.getState())
+class App extends React.Component {
+  componentDidMount() {
+    store.subscribe(() => this.forceUpdate())
+  }
+
+  render() {
+    const messages = store.getState().messages
+
+    return (
+      <div className='ui segment'>
+        <MessageView messages={messages} />
+        <MessageInput />
+      </div>
+    )
+  }
 }
 
-store.subscribe(listener)
+class MessageInput extends React.Component {
+  state = {
+    value: '',
+  }
 
-const addMessageAction1 = {
-  type: 'ADD_MESSAGE',
-  message: 'How do you read?',
+  onChange = (e) => {
+    this.setState({
+      value: e.target.value,
+    })
+  }
+
+  handleSubmit = () => {
+    store.dispatch({
+      type: 'ADD_MESSAGE',
+      message: this.state.value,
+    })
+    this.setState({
+      value: '',
+    })
+  }
+
+  render() {
+    return (
+      <div className='ui input'>
+        <input
+          onChange={this.onChange}
+          value={this.state.value}
+          type='text'
+        />
+        <button
+          onClick={this.handleSubmit}
+          className='ui primary button'
+          type='submit'
+          >
+            Submit
+          </button>
+      </div>
+    )
+  }
 }
 
-store.dispatch(addMessageAction1)
 
-const addMessageAction2 = {
-  type: 'ADD_MESSAGE',
-  message: 'I read you loud and clear, Houston.',
+
+class MessageView extends React.Component {
+  handleClick = (index) => {
+    store.dispatch({
+      type: 'DELETE_MESSAGE',
+      index: index
+    })
+  }
+
+  render() {
+    const messages = this.props.messages.map((message, index) => (
+      <div
+        className='comment'
+        key={index}
+        onClick={() => this.handleClick(index)}
+        >
+          {message}
+        </div>
+    ))
+    return (
+      <div className='ui comments'>
+        {messages}
+      </div>
+    )
+  }
 }
 
-store.dispatch(addMessageAction2)
-
-const deleteMessageAction = {
-  type: 'DELETE_MESSAGE',
-  index: 0,
-}
-
-store.dispatch(deleteMessageAction)
+export default App
